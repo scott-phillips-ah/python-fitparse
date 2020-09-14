@@ -57,7 +57,7 @@ def create_element(tag, text=None, namespace=None):
 
 def create_document() -> Element:
     document = Element("TrainingCenterDatabase", nsmap=NSMAP)
-    # TODO - Set schema location
+    # Set schema location
     document.set(XML_SCHEMA + "schemaLocation", SCHEMA_LOCATION)
     return document
 

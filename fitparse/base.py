@@ -419,7 +419,7 @@ class FitFile(object):
             if is_iterable(name):
                 names = set(name)
             else:
-                names = set((name,))
+                names = {name}
 
         def should_yield(message):
             if with_definitions or message.type == 'data':
