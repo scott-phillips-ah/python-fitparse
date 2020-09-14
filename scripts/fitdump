@@ -16,6 +16,7 @@ except NameError:
     BrokenPipeError = socket.error
 
 import fitparse
+import fitparse.tcx
 
 
 def format_message(num, message, options):
@@ -104,15 +105,6 @@ def write_csv(options, records):
     pass
 
 
-def write_fit(options: object, records: list) -> None:
-    # TODO - Create the document
-    # TODO - Create the activities section
-    # TODO - Add the session
-    # TODO - Add the sport and activity summary information
-    # TODO - Iterate through all the lap data
-    pass
-
-
 def parse_args(args=None):
     parser = argparse.ArgumentParser(
         description='Dump .FIT files to various formats',
@@ -193,7 +185,7 @@ def main(args=None):
         elif options.type == 'csv':
             write_csv(options, records)
         elif options.type == 'tcx':
-            write_tcx(options, records)
+            fitparse.tcx.write_tcx(options, records)
     finally:
         try:
             options.output.close()
