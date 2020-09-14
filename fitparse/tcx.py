@@ -62,18 +62,24 @@ def create_document() -> Element:
     return document
 
 
-def write_tcx(options: object, records: list) -> None:
+def create_activity_section(tcx_doc: Element, records: list) -> None:
+    activities_elem = SubElement(tcx_doc, "Activities")
+    # Add the session
+    activity_elem = SubElement(activities_elem, "Activity")
+    sport_record = next(x for x in records if x.name == 'sport')
+    sport_name = next(f.value for f in sport_record.fields if f.name == 'sport')
+    activity_elem.attrib['Sport'] = SPORT_MAP[sport_name]
+    # TODO - Add the sport and activity summary information
+    # TODO - Iterate through all the lap data
+
+
+def write_tcx(options, records) -> None:
     records = list(records)
     # Create the document
     tcx_doc = create_document()
     # Create the activities section
-    activities_elem = SubElement(tcx_doc, "Activities")
-    # Add the session
-    activity_elem = SubElement(activities_elem, "Activity")
-
-    # TODO - Add the sport and activity summary information
-    # TODO - Iterate through all the lap data
-    # TODO - Write the file
+    create_activity_section(tcx_doc, records)
+    # Write the file
     options.output.write(tostring(tcx_doc, xml_declaration=True, pretty_print=True,
                                   encoding='utf-8').decode('utf-8'))
     pass
