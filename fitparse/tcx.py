@@ -1,5 +1,6 @@
 from lxml.etree import Element, SubElement, tostring
 
+from fitparse import FitFile
 
 TCD_NAMESPACE = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
 TCD = "{%s}" % TCD_NAMESPACE
@@ -62,23 +63,34 @@ def create_document() -> Element:
     return document
 
 
-def create_activity_section(tcx_doc: Element, records: list) -> None:
-    activities_elem = SubElement(tcx_doc, "Activities")
+def create_lap(activity, lap_data):
+    pass
+
+
+def create_activity_section(activities, file):
     # Add the session
-    activity_elem = SubElement(activities_elem, "Activity")
-    sport_record = next(x for x in records if x.name == 'sport')
-    sport_name = next(f.value for f in sport_record.fields if f.name == 'sport')
-    activity_elem.attrib['Sport'] = SPORT_MAP[sport_name]
-    # TODO - Add the sport and activity summary information
+    file_id = next(file.get_messages(name='file_id'))
+    session = next(file.get_messages(name='sport'))
+    activity = SubElement(activities, "Activity")
+    # Add the sport and activity summary information
+    activity.attrib['Sport'] = SPORT_MAP.get(session.get_value("sport"), "Other")
+    id_elem = SubElement(activity, "Id")
+    id_elem.text = file_id.get_value('time_created').isoformat() + 'Z'
+
     # TODO - Iterate through all the lap data
 
 
-def write_tcx(options, records) -> None:
-    records = list(records)
+def write_tcx(options) -> None:
+    file = FitFile(
+        options.infile,
+        check_crc=not options.ignore_crc
+    )
+    file.parse()
     # Create the document
     tcx_doc = create_document()
+    activities = SubElement(tcx_doc, "Activities")
     # Create the activities section
-    create_activity_section(tcx_doc, records)
+    create_activity_section(activities, file)
     # Write the file
     options.output.write(tostring(tcx_doc, xml_declaration=True, pretty_print=True,
                                   encoding='utf-8').decode('utf-8'))

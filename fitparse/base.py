@@ -130,35 +130,39 @@ class FitFile(object):
         self._bytes_left = data_size
 
     def _parse_message(self):
-        # When done, calculate the CRC and return None
-        if self._bytes_left <= 0:
-            # Don't assert CRC if requested not
-            if not self._complete and self.check_crc:
-                self._read_and_assert_crc()
+        try:
+            # When done, calculate the CRC and return None
+            if self._bytes_left <= 0:
+                # Don't assert CRC if requested not
+                if not self._complete and self.check_crc:
+                    self._read_and_assert_crc()
 
-            if self._file.tell() >= self._filesize:
-                self._complete = True
-                self.close()
-                return None
+                if self._file.tell() >= self._filesize:
+                    self._complete = True
+                    self.close()
+                    return None
 
-            # Still have data left in the file - assuming chained fit files
-            self._parse_file_header()
-            return self._parse_message()
+                # Still have data left in the file - assuming chained fit files
+                self._parse_file_header()
+                return self._parse_message()
 
-        header = self._parse_message_header()
+            header = self._parse_message_header()
 
-        if header.is_definition:
-            message = self._parse_definition_message(header)
-        else:
-            message = self._parse_data_message(header)
-            if message.mesg_type is not None:
-                if message.mesg_type.name == 'developer_data_id':
-                    add_dev_data_id(message)
-                elif message.mesg_type.name == 'field_description':
-                    add_dev_field_description(message)
+            if header.is_definition:
+                message = self._parse_definition_message(header)
+            else:
+                message = self._parse_data_message(header)
+                if message.mesg_type is not None:
+                    if message.mesg_type.name == 'developer_data_id':
+                        add_dev_data_id(message)
+                    elif message.mesg_type.name == 'field_description':
+                        add_dev_field_description(message)
 
-        self._messages.append(message)
-        return message
+            self._messages.append(message)
+            return message
+        except FitEOFError:
+            # file was suddenly terminated, usually due to
+            print("File was terminated unexpectedly, some data will not be loaded.")
 
     def _parse_message_header(self):
         header = self._read_struct('B')
@@ -247,14 +251,9 @@ class FitFile(object):
             struct_fmt = str(int(field_def.size / base_type.size)) + base_type.fmt
 
             # Extract the raw value, ask for a tuple if it's a byte type
-            try:
-                raw_value = self._read_struct(
-                    struct_fmt, endian=def_mesg.endian, always_tuple=is_byte,
-                )
-            except FitEOFError:
-                # file was suddenly terminated, usually due to
-                print("File was terminated unexpectedly, some data will not be loaded.")
-                break
+            raw_value = self._read_struct(
+                struct_fmt, endian=def_mesg.endian, always_tuple=is_byte,
+            )
 
             # If the field returns with a tuple of values it's definitely an
             # oddball, but we'll parse it on a per-value basis it.

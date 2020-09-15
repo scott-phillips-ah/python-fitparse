@@ -185,7 +185,7 @@ def main(args=None):
         elif options.type == 'csv':
             write_csv(options, records)
         elif options.type == 'tcx':
-            fitparse.tcx.write_tcx(options, records)
+            fitparse.tcx.write_tcx(options)
     finally:
         try:
             options.output.close()
